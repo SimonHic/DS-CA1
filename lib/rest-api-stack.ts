@@ -4,6 +4,7 @@ import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as custom from "aws-cdk-lib/custom-resources";
 import * as apig from "aws-cdk-lib/aws-apigateway";
+import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { generateBatch } from "../shared/util";
@@ -119,6 +120,24 @@ export class RestAPIStack extends cdk.Stack {
             REGION: "eu-west-1",
           },
         });
+
+        const translateMovieFn = new lambdanode.NodejsFunction(this, "TranslateMovieFn", {
+          architecture: lambda.Architecture.ARM_64,
+          runtime: lambda.Runtime.NODEJS_22_X,
+          entry: `${__dirname}/../lambdas/translateMovie.ts`,
+          timeout: cdk.Duration.seconds(10),
+          memorySize: 128,
+          environment: {
+            TABLE_NAME: moviesTable.tableName,
+            REGION: "eu-west-1",
+          },
+        });
+        translateMovieFn.addToRolePolicy(
+          new iam.PolicyStatement({
+            actions: ["translate:TranslateText"],
+            resources: ["*"],
+          })
+        )
         
         new custom.AwsCustomResource(this, "moviesddbInitData", {
           onCreate: {
@@ -143,6 +162,7 @@ export class RestAPIStack extends cdk.Stack {
         moviesTable.grantReadWriteData(newMovieFn)
         moviesTable.grantReadWriteData(deleteMovieFn)
         moviesTable.grantReadWriteData(updateMovieFn)
+        moviesTable.grantReadData(translateMovieFn)
         movieCastsTable.grantReadData(getMovieByIdFn)
         movieCastsTable.grantReadData(getMovieCastMembersFn);
         
@@ -189,6 +209,12 @@ export class RestAPIStack extends cdk.Stack {
     movieCastEndpoint.addMethod(
         "GET",
         new apig.LambdaIntegration(getMovieCastMembersFn, { proxy: true })
+    );
+    const movieTranslationEndpoint = specificMovieEndpoint.addResource("translation");
+
+    movieTranslationEndpoint.addMethod(
+        "GET",
+        new apig.LambdaIntegration(translateMovieFn, { proxy: true })
     );
       }
     }
