@@ -8,7 +8,7 @@ __Demo:__ ... link to your YouTube video demonstration coming soon ......
 
 Context: Tabletop Games + Publishers
 
-This Rest API manages a collection of tabletop games along with their respective publishers. The following are the two DynamoDB tables and their attributes: 
+This REST API manages a collection of tabletop games along with their respective publishers. The following are the two DynamoDB tables and their attributes: 
 
 Games Table item attributes:
 + id - number  (Partition key)
@@ -35,7 +35,7 @@ GamePublisherTable item attributes:
 + GET /games/{gameId}?publisher=true - Retrieve a specific game with its publisher (Query String Parameter).
 + PUT /games/{gameId} - Update an existing game details.
 + DELETE /games/{gameId} - Delete a specific game.
-+ GET /games/{gameId}/translation?language=fr - Retrieve a specified game and translate the overview.
++ GET /games/{gameId}/translation?language=fr - Retrieve a specified game and translate the overview using the __original_language__ attribute as the **Source** language.
 + GET /games/publisher - Retrieve publisher information. Optional filtering using gameId, publisherName, and publisherCountry using query parameters.
 
 
@@ -63,4 +63,11 @@ API key authentication is **not included** in this implementation.
 
 ###  Extra (If relevant).
 
-No additional CDK/serverless features were implemented beyond what was covered in lecturers.
+**No additional** CDK/serverless features were implemented beyond what was covered in lecturers.
+
+#### References/Resources used
+
++ Distributed Systems **Serverless-Web-API-lab** used as project foundation.
++ https://docs.aws.amazon.com/AWSJavaScriptSDK/v3/latest/client/translate/command/TranslateTextCommand/
++ https://completecoding.io/typescript-translation-api/
++ https://stackoverflow.com/questions/52636929/specifying-a-custom-role-for-lambda-with-the-aws-cdk#52653862
