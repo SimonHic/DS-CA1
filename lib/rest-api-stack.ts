@@ -47,7 +47,7 @@ export class RestAPIStack extends cdk.Stack {
         memorySize: 128,
         environment: {
           TABLE_NAME: gamesTable.tableName,
-          CAST_TABLE_NAME: gamePublisherTable.tableName,
+          PUBLISHER_TABLE_NAME: gamePublisherTable.tableName,
           REGION: 'eu-west-1',
         },
       }
