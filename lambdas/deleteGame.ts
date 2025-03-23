@@ -8,28 +8,28 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("[EVENT]", JSON.stringify(event));
     
-    const movieId = event?.pathParameters?.movieId;
+    const gameId = event?.pathParameters?.gameId;
 
-    if (!movieId) {
+    if (!gameId) {
         return{
             statusCode: 400,
             headers:{"content-type": "application/json"
             },
-            body: JSON.stringify({ message: "Missing movie ID in the request"})
+            body: JSON.stringify({ message: "Missing game ID in the request"})
         };
     }
 
     await ddbDocClient.send(
         new DeleteCommand({
             TableName: process.env.TABLE_NAME,
-            Key: { id: parseInt(movieId)},
+            Key: { id: parseInt(gameId)},
         })
     );
 
     return{
         statusCode: 200,
         headers:{"content-type": "application/json"},
-    body: JSON.stringify({message: "Movie has been deleted successfully"})
+    body: JSON.stringify({message: "Game has been deleted successfully"})
   };
   
   }catch (error: any){

@@ -1,5 +1,5 @@
 import { APIGatewayProxyHandlerV2 } from "aws-lambda";
-import { MovieCastMemberQueryParams } from "../shared/types";
+import { GamePublisherQueryParams } from "../shared/types";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
@@ -11,7 +11,7 @@ import schema from "../shared/types.schema.json";
 
 const ajv = new Ajv();
 const isValidQueryParams = ajv.compile(
-  schema.definitions["MovieCastMemberQueryParams"] || {}
+  schema.definitions["GamePublisherQueryParams"] || {}
 );
  
 const ddbDocClient = createDocumentClient();
@@ -37,40 +37,40 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
         },
         body: JSON.stringify({
           message: `Incorrect type. Must match Query parameters schema`,
-          schema: schema.definitions["MovieCastMemberQueryParams"],
+          schema: schema.definitions["GamePublisherQueryParams"],
         }),
       };
     }
     
-    const movieId = parseInt(queryParams.movieId);
+    const gameId = parseInt(queryParams.gameId);
     let commandInput: QueryCommandInput = {
       TableName: process.env.TABLE_NAME,
     };
-    if ("roleName" in queryParams) {
+    if ("publisherCountry" in queryParams) {
       commandInput = {
         ...commandInput,
         IndexName: "roleIx",
-        KeyConditionExpression: "movieId = :m and begins_with(roleName, :r) ",
+        KeyConditionExpression: "gameId = :g and begins_with(publisherCountry, :r) ",
         ExpressionAttributeValues: {
-          ":m": movieId,
-          ":r": queryParams.roleName,
+          ":g": gameId,
+          ":r": queryParams.publisherCountry,
         },
       };
-    } else if ("actorName" in queryParams) {
+    } else if ("publisherName" in queryParams) {
       commandInput = {
         ...commandInput,
-        KeyConditionExpression: "movieId = :m and begins_with(actorName, :a) ",
+        KeyConditionExpression: "gameId = :g and begins_with(publisherName, :a) ",
         ExpressionAttributeValues: {
-          ":m": movieId,
-          ":a": queryParams.actorName,
+          ":g": gameId,
+          ":a": queryParams.publisherName,
         },
       };
     } else {
       commandInput = {
         ...commandInput,
-        KeyConditionExpression: "movieId = :m",
+        KeyConditionExpression: "gameId = :g",
         ExpressionAttributeValues: {
-          ":m": movieId,
+          ":g": gameId,
         },
       };
     }

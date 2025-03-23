@@ -21,7 +21,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => { // 
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "No movies found" }),
+        body: JSON.stringify({ Message: "No games found" }),
       };
     }
     const body = {

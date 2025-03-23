@@ -8,22 +8,22 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
   try {
     console.log("[EVENT]", JSON.stringify(event));
     
-    const movieId = event?.pathParameters?.movieId;
+    const gameId = event?.pathParameters?.gameId;
     const body = event.body ? JSON.parse(event.body) : {};
 
-    if (!movieId) {
+    if (!gameId) {
         return{
             statusCode: 400,
             headers:{"content-type": "application/json"
             },
-            body: JSON.stringify({ message: "Missing movie ID in the request"})
+            body: JSON.stringify({ message: "Missing game ID in the request"})
         };
     }
 
     await ddbDocClient.send(
         new UpdateCommand({
             TableName: process.env.TABLE_NAME,
-            Key: { id: parseInt(movieId)},
+            Key: { id: parseInt(gameId)},
             UpdateExpression: "set #title = :title, overview = :overview",
             ExpressionAttributeNames:{
                 "#title": "title"
@@ -39,7 +39,7 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {
     return{
         statusCode: 200,
         headers:{"content-type": "application/json"},
-    body: JSON.stringify({message: "Movie has been updated successfully"})
+    body: JSON.stringify({message: "Game has been updated successfully"})
   };
   
   }catch (error: any){

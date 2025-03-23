@@ -8,163 +8,163 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 // import * as sqs from 'aws-cdk-lib/aws-sqs';
 import { generateBatch } from "../shared/util";
-import { movies, movieCasts } from "../seed/movies";
+import { games, gamePublishers } from "../seed/games";
 
 export class RestAPIStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // Tables 
-    const moviesTable = new dynamodb.Table(this, "MoviesTable", {
+    const gamesTable = new dynamodb.Table(this, "GamesTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      tableName: "Movies",
+      tableName: "Games",
     });
 
-    const movieCastsTable = new dynamodb.Table(this, "MovieCastTable", {
+    const gamePublisherTable = new dynamodb.Table(this, "GamePublisherTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-      partitionKey: { name: "movieId", type: dynamodb.AttributeType.NUMBER },
-      sortKey: { name: "actorName", type: dynamodb.AttributeType.STRING },
+      partitionKey: { name: "gameId", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "publisherName", type: dynamodb.AttributeType.STRING },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
-      tableName: "MovieCast",
+      tableName: "GamePublisher",
     });
 
-    movieCastsTable.addLocalSecondaryIndex({
+    gamePublisherTable.addLocalSecondaryIndex({
       indexName: "roleIx",
-      sortKey: { name: "roleName", type: dynamodb.AttributeType.STRING },
+      sortKey: { name: "publisherCountry", type: dynamodb.AttributeType.STRING },
     });
 
     // Functions 
-    const getMovieByIdFn = new lambdanode.NodejsFunction(
+    const getGameByIdFn = new lambdanode.NodejsFunction(
       this,
-      "GetMovieByIdFn",
+      "GetGameByIdFn",
       {
         architecture: lambda.Architecture.ARM_64,
         runtime: lambda.Runtime.NODEJS_18_X,
-        entry: `${__dirname}/../lambdas/getMovieById.ts`,
+        entry: `${__dirname}/../lambdas/getGameById.ts`,
         timeout: cdk.Duration.seconds(10),
         memorySize: 128,
         environment: {
-          TABLE_NAME: moviesTable.tableName,
-          CAST_TABLE_NAME: movieCastsTable.tableName,
+          TABLE_NAME: gamesTable.tableName,
+          CAST_TABLE_NAME: gamePublisherTable.tableName,
           REGION: 'eu-west-1',
         },
       }
       );
       
-      const getAllMoviesFn = new lambdanode.NodejsFunction(
+      const getAllGamesFn = new lambdanode.NodejsFunction(
         this,
-        "GetAllMoviesFn",
+        "GetAllGamesFn",
         {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_18_X,
-          entry: `${__dirname}/../lambdas/getAllMovies.ts`,
+          entry: `${__dirname}/../lambdas/getAllGames.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: gamesTable.tableName,
             REGION: 'eu-west-1',
           },
         }
         );
 
-        const newMovieFn = new lambdanode.NodejsFunction(this, "AddMovieFn", {
+        const newGameFn = new lambdanode.NodejsFunction(this, "AddGameFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_22_X,
-          entry: `${__dirname}/../lambdas/addMovie.ts`,
+          entry: `${__dirname}/../lambdas/addGame.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: gamesTable.tableName,
             REGION: "eu-west-1",
           },
         });
 
-        const deleteMovieFn = new lambdanode.NodejsFunction(this, "DeleteMovieFn", {
+        const deleteGameFn = new lambdanode.NodejsFunction(this, "DeleteGameFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_22_X,
-          entry: `${__dirname}/../lambdas/deleteMovie.ts`,
+          entry: `${__dirname}/../lambdas/deleteGame.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: gamesTable.tableName,
             REGION: "eu-west-1",
           },
         });
 
-        const getMovieCastMembersFn = new lambdanode.NodejsFunction(
+        const getGamePublisherFn = new lambdanode.NodejsFunction(
           this,
-          "GetCastMemberFn",
+          "GetPublisherFn",
           {
             architecture: lambda.Architecture.ARM_64,
             runtime: lambda.Runtime.NODEJS_22_X,
-            entry: `${__dirname}/../lambdas/getMovieCastMember.ts`,
+            entry: `${__dirname}/../lambdas/getGamePublisher.ts`,
             timeout: cdk.Duration.seconds(10),
             memorySize: 128,
             environment: {
-              TABLE_NAME: movieCastsTable.tableName,
+              TABLE_NAME: gamePublisherTable.tableName,
               REGION: "eu-west-1",
             },
           }
         );
 
-        const updateMovieFn = new lambdanode.NodejsFunction(this, "UpdateMovieFn", {
+        const updateGameFn = new lambdanode.NodejsFunction(this, "UpdateGameFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_22_X,
-          entry: `${__dirname}/../lambdas/updateMovie.ts`,
+          entry: `${__dirname}/../lambdas/updateGame.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: gamesTable.tableName,
             REGION: "eu-west-1",
           },
         });
 
-        const translateMovieFn = new lambdanode.NodejsFunction(this, "TranslateMovieFn", {
+        const translateGameFn = new lambdanode.NodejsFunction(this, "TranslateGameFn", {
           architecture: lambda.Architecture.ARM_64,
           runtime: lambda.Runtime.NODEJS_22_X,
-          entry: `${__dirname}/../lambdas/translateMovie.ts`,
+          entry: `${__dirname}/../lambdas/translateGame.ts`,
           timeout: cdk.Duration.seconds(10),
           memorySize: 128,
           environment: {
-            TABLE_NAME: moviesTable.tableName,
+            TABLE_NAME: gamesTable.tableName,
             REGION: "eu-west-1",
           },
         });
-        translateMovieFn.addToRolePolicy(
+        translateGameFn.addToRolePolicy(
           new iam.PolicyStatement({
             actions: ["translate:TranslateText"],
             resources: ["*"],
           })
         )
         
-        new custom.AwsCustomResource(this, "moviesddbInitData", {
+        new custom.AwsCustomResource(this, "gamesddbInitData", {
           onCreate: {
             service: "DynamoDB",
             action: "batchWriteItem",
             parameters: {
               RequestItems: {
-                [moviesTable.tableName]: generateBatch(movies),
-                [movieCastsTable.tableName]: generateBatch(movieCasts),  // Added
+                [gamesTable.tableName]: generateBatch(games),
+                [gamePublisherTable.tableName]: generateBatch(gamePublishers),  // Added
               },
             },
-            physicalResourceId: custom.PhysicalResourceId.of("moviesddbInitData"), //.of(Date.now().toString()),
+            physicalResourceId: custom.PhysicalResourceId.of("gamesddbInitData"), //.of(Date.now().toString()),
           },
           policy: custom.AwsCustomResourcePolicy.fromSdkCalls({
-            resources: [moviesTable.tableArn, movieCastsTable.tableArn],  // Includes movie cast
+            resources: [gamesTable.tableArn, gamePublisherTable.tableArn],  // Includes game publisher
           }),
         });
         
         // Permissions 
-        moviesTable.grantReadData(getMovieByIdFn)
-        moviesTable.grantReadData(getAllMoviesFn)
-        moviesTable.grantReadWriteData(newMovieFn)
-        moviesTable.grantReadWriteData(deleteMovieFn)
-        moviesTable.grantReadWriteData(updateMovieFn)
-        moviesTable.grantReadData(translateMovieFn)
-        movieCastsTable.grantReadData(getMovieByIdFn)
-        movieCastsTable.grantReadData(getMovieCastMembersFn);
+        gamesTable.grantReadData(getGameByIdFn)
+        gamesTable.grantReadData(getAllGamesFn)
+        gamesTable.grantReadWriteData(newGameFn)
+        gamesTable.grantReadWriteData(deleteGameFn)
+        gamesTable.grantReadWriteData(updateGameFn)
+        gamesTable.grantReadData(translateGameFn)
+        gamePublisherTable.grantReadData(getGameByIdFn)
+        gamePublisherTable.grantReadData(getGamePublisherFn);
         
         // REST API 
     const api = new apig.RestApi(this, "RestAPI", {
@@ -180,41 +180,41 @@ export class RestAPIStack extends cdk.Stack {
       },
     });
 
-    // Movies endpoint
-    const moviesEndpoint = api.root.addResource("movies");
-    moviesEndpoint.addMethod(
+    // Games endpoint
+    const gamesEndpoint = api.root.addResource("games");
+    gamesEndpoint.addMethod(
       "GET",
-      new apig.LambdaIntegration(getAllMoviesFn, { proxy: true })
+      new apig.LambdaIntegration(getAllGamesFn, { proxy: true })
     );
-    // Detail movie endpoint
-    const specificMovieEndpoint = moviesEndpoint.addResource("{movieId}");
-    specificMovieEndpoint.addMethod(
+    // Detail game endpoint
+    const specificGameEndpoint = gamesEndpoint.addResource("{gameId}");
+    specificGameEndpoint.addMethod(
       "GET",
-      new apig.LambdaIntegration(getMovieByIdFn, { proxy: true })
+      new apig.LambdaIntegration(getGameByIdFn, { proxy: true })
     );
-    moviesEndpoint.addMethod(
+    gamesEndpoint.addMethod(
       "POST",
-      new apig.LambdaIntegration(newMovieFn, { proxy: true })
+      new apig.LambdaIntegration(newGameFn, { proxy: true })
     );
-    specificMovieEndpoint.addMethod(
+    specificGameEndpoint.addMethod(
       "DELETE",
-      new apig.LambdaIntegration(deleteMovieFn, { proxy: true }),
+      new apig.LambdaIntegration(deleteGameFn, { proxy: true }),
     );
-    specificMovieEndpoint.addMethod(
+    specificGameEndpoint.addMethod(
       "PUT",
-      new apig.LambdaIntegration(updateMovieFn, { proxy: true }),
+      new apig.LambdaIntegration(updateGameFn, { proxy: true }),
     );
-    const movieCastEndpoint = moviesEndpoint.addResource("cast");
+    const gamePublisherEndpoint = gamesEndpoint.addResource("publisher");
 
-    movieCastEndpoint.addMethod(
+    gamePublisherEndpoint.addMethod(
         "GET",
-        new apig.LambdaIntegration(getMovieCastMembersFn, { proxy: true })
+        new apig.LambdaIntegration(getGamePublisherFn, { proxy: true })
     );
-    const movieTranslationEndpoint = specificMovieEndpoint.addResource("translation");
+    const gameTranslationEndpoint = specificGameEndpoint.addResource("translation");
 
-    movieTranslationEndpoint.addMethod(
+    gameTranslationEndpoint.addMethod(
         "GET",
-        new apig.LambdaIntegration(translateMovieFn, { proxy: true })
+        new apig.LambdaIntegration(translateGameFn, { proxy: true })
     );
       }
     }

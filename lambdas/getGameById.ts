@@ -9,23 +9,23 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {    
     console.log("[EVENT]", JSON.stringify(event));
     const pathParameters  = event?.pathParameters;
     const queryParams  = event?.queryStringParameters;
-    const movieId = pathParameters?.movieId ? parseInt(pathParameters.movieId) : undefined;
-    const includeCast = queryParams?.cast === "true"; // Check to see if 'true' is there
+    const gameId = pathParameters?.gameId ? parseInt(pathParameters.gameId) : undefined;
+    const includePublisher = queryParams?.publisher === "true"; // Check to see if 'true' is there
 
-    if (!movieId) {
+    if (!gameId) {
       return {
         statusCode: 404,
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Missing movie Id" }),
+        body: JSON.stringify({ Message: "Missing game Id" }),
       };
     }
 
     const commandOutput = await ddbDocClient.send(
       new GetCommand({
         TableName: process.env.TABLE_NAME,
-        Key: { id: movieId },
+        Key: { id: gameId },
       })
     );
     console.log("GetCommand response: ", commandOutput);
@@ -35,27 +35,27 @@ export const handler: APIGatewayProxyHandlerV2 = async (event, context) => {    
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ Message: "Invalid movie Id" }),
+        body: JSON.stringify({ Message: "Invalid game Id" }),
       };
     }
     /* const body = {
       data: commandOutput.Item,
     }; */
-    const body: { data: Record<string, any>; cast?: any []} ={
+    const body: { data: Record<string, any>; publisher?: any []} ={
       data: commandOutput.Item,
     };
 
-    if (includeCast){
-      const castResponse = await ddbDocClient.send(
+    if (includePublisher){
+      const publisherResponse = await ddbDocClient.send(
         new QueryCommand({
-          TableName: process.env.CAST_TABLE_NAME,
-          KeyConditionExpression: "movieId = :m",
+          TableName: process.env.PUBLISHER_TABLE_NAME,
+          KeyConditionExpression: "gameId = :g",
           ExpressionAttributeValues:{
-            ":m": movieId,
+            ":g": gameId,
           },
         })
       );
-      body.cast = castResponse.Items || [];
+      body.publisher = publisherResponse.Items || [];
     }
 
     // Return Response
